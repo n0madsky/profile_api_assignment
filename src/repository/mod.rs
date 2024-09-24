@@ -27,6 +27,28 @@ impl InMemoryProfileRepository {
             product_registration_children: HashMap::new(),
         }
     }
+
+    pub fn with_example_data() -> Self {
+        Self {
+            profiles: Vec::from([
+                Profile {
+                    id: 1,
+                    email: "john.doe@example.com".into(),
+                    firstname: "John".into(),
+                    lastname: "Doe".into(),
+                },
+                Profile {
+                    id: 2,
+                    email: "jane.smith@example.com".into(),
+                    firstname: "Jane".into(),
+                    lastname: "Smith".into(),
+                },
+            ]),
+            profile_to_product_registrations: HashMap::new(),
+            product_registrations: Vec::new(),
+            product_registration_children: HashMap::new(),
+        }
+    }
 }
 
 impl ProfileRepository for InMemoryProfileRepository {

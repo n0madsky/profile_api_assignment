@@ -18,7 +18,7 @@ async fn main() {
     let config = ProfileServiceConfig::default();
 
     let service = Arc::new(ProfileService::new(
-        InMemoryProfileRepository::new(),
+        InMemoryProfileRepository::with_example_data(),
         config,
     ));
 
