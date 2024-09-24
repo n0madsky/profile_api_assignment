@@ -1,3 +1,4 @@
+mod config;
 mod repository;
 mod service;
 mod web;
@@ -5,6 +6,7 @@ mod web;
 use std::sync::Arc;
 
 use axum::Router;
+use envconfig::Envconfig;
 use repository::InMemoryProfileRepository;
 use service::{ProfileService, ProfileServiceConfig};
 use web::controller::{product_registrations_get, profiles_get};
@@ -14,13 +16,20 @@ async fn main() {
     // initialize tracing
     tracing_subscriber::fmt::init();
 
-    // TODO - Add code to initialize config from config file/environment variables
-    let config = ProfileServiceConfig::default();
+    let config = config::Config::init_from_env().unwrap();
+    tracing::info!("Starting with the following configs: {:#?}", config);
 
-    let service = Arc::new(ProfileService::new(
-        InMemoryProfileRepository::with_example_data(),
-        config,
-    ));
+    let service_config = ProfileServiceConfig {
+        profile_per_page: config.profiles_per_page,
+    };
+
+    let db = if config.use_sample_data {
+        InMemoryProfileRepository::with_example_data()
+    } else {
+        InMemoryProfileRepository::new()
+    };
+
+    let service = Arc::new(ProfileService::new(db, service_config));
 
     // build our application with a route
     let profile_router = Router::new()
@@ -33,7 +42,8 @@ async fn main() {
 
     let app = Router::new().nest("/api/v1", profile_router);
 
-    // run our app with hyper, listening globally on port 3000
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind(format!("{}:{}", config.host, config.port))
+        .await
+        .unwrap();
     axum::serve(listener, app).await.unwrap();
 }
