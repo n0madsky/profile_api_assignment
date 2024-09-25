@@ -7,15 +7,16 @@ pub struct Profile {
 }
 
 #[derive(Clone)]
+pub struct ProductRegistrationRecord {
+    pub registration: ProductRegistration,
+    pub children: Vec<ProductRegistration>,
+}
+
+#[derive(Clone)]
 pub struct ProductRegistration {
     pub id: u64,
     pub purchase_date: chrono::DateTime<chrono::Utc>,
     pub expiry_at: chrono::DateTime<chrono::Utc>,
-    pub product: Product,
+    pub product: String,
     pub serial_code: String,
-}
-
-#[derive(Clone)]
-pub struct Product {
-    pub sku: String,
 }

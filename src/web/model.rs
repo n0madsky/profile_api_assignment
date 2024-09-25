@@ -34,6 +34,18 @@ pub(crate) struct ProductRegistration {
     pub additional_product_registrations: Vec<ProductRegistrationsChild>,
 }
 
+impl From<crate::service::model::ProductRegistration> for ProductRegistration {
+    fn from(value: crate::service::model::ProductRegistration) -> Self {
+        ProductRegistration {
+            id: value.id,
+            purchase_date: value.purchase_date,
+            expiry_at: value.expiry_at,
+            product: Product { sku: value.product },
+            additional_product_registrations: Vec::new(),
+        }
+    }
+}
+
 #[derive(serde::Deserialize, serde::Serialize)]
 pub(crate) struct Product {
     pub sku: String,

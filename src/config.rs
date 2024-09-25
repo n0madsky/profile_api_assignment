@@ -8,6 +8,8 @@ pub(crate) struct Config {
     pub port: u16,
     #[envconfig(from = "APP_PROFILES_PER_PAGE", default = "30")]
     pub profiles_per_page: u32,
+    #[envconfig(from = "APP_PRODUCT_REGISTRATIONS_PER_PAGE", default = "30")]
+    pub product_registrations_per_page: u32,
     #[envconfig(from = "APP_USE_SAMPLE_DATA", default = "true")]
     pub use_sample_data: bool,
 }

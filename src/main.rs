@@ -9,7 +9,7 @@ use axum::Router;
 use envconfig::Envconfig;
 use repository::InMemoryProfileRepository;
 use service::{ProfileService, ProfileServiceConfig};
-use web::controller::{product_registrations_get, profiles_get};
+use web::controller::{product_registrations_get, profile_product_registrations_get, profiles_get};
 
 #[tokio::main]
 async fn main() {
@@ -21,6 +21,7 @@ async fn main() {
 
     let service_config = ProfileServiceConfig {
         profile_per_page: config.profiles_per_page,
+        product_registrations_per_page: config.product_registrations_per_page,
     };
 
     let db = if config.use_sample_data {
@@ -34,6 +35,10 @@ async fn main() {
     // build our application with a route
     let profile_router = Router::new()
         .route("/profiles", axum::routing::get(profiles_get))
+        .route(
+            "/profiles/:profile/product_registrations",
+            axum::routing::get(profile_product_registrations_get),
+        )
         .route(
             "/product_registration/:id",
             axum::routing::get(product_registrations_get),

@@ -6,6 +6,13 @@ use model::{ProductRegistration, Profile};
 
 pub trait ProfileRepository {
     fn get_profiles(&self, start: u64, count: u64) -> Vec<Profile>;
+    fn get_profile(&self, id: u64) -> Option<Profile>;
+    fn get_product_registrations_for_profile(
+        &self,
+        profile_id: u64,
+        start: u64,
+        count: u64,
+    ) -> Vec<ProductRegistration>;
     fn get_product_registration(&self, id: u64) -> Option<ProductRegistration>;
 }
 
@@ -62,6 +69,35 @@ impl ProfileRepository for InMemoryProfileRepository {
         let end = min(start + count as usize, self.profiles.len());
 
         self.profiles.get(start..end).unwrap_or_default().to_vec()
+    }
+
+    fn get_profile(&self, id: u64) -> Option<Profile> {
+        self.profiles.get(id as usize).cloned()
+    }
+
+    fn get_product_registrations_for_profile(
+        &self,
+        profile_id: u64,
+        start: u64,
+        count: u64,
+    ) -> Vec<ProductRegistration> {
+        let Some(product_registration_ids) = self.profile_to_product_registrations.get(&profile_id)
+        else {
+            return Vec::new();
+        };
+
+        let start = start as usize;
+        let end = start + count as usize;
+        if start >= product_registration_ids.len() {
+            return Vec::new();
+        }
+
+        product_registration_ids
+            .get(start..end)
+            .unwrap_or_default()
+            .iter()
+            .filter_map(|id| self.get_product_registration(*id))
+            .collect()
     }
 
     // TODO - fill out children logic
