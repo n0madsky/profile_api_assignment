@@ -11,10 +11,7 @@ use crate::{
     web::model::ProductRegistrationRecord,
 };
 
-use super::{
-    error::ProfileApiError,
-    model::{ProductRegistration, Profile},
-};
+use super::{error::ProfileApiError, model::Profile};
 
 #[derive(serde::Deserialize)]
 pub(crate) struct Pagination {

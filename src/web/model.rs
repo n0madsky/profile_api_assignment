@@ -29,6 +29,7 @@ pub(crate) struct ProductRegistration {
     #[serde(with = "chrono::serde::ts_milliseconds_option")]
     pub expiry_at: Option<chrono::DateTime<chrono::Utc>>,
     pub product: Product,
+    pub serial_code: String,
 }
 
 impl From<crate::service::model::ProductRegistration> for ProductRegistration {
@@ -38,6 +39,7 @@ impl From<crate::service::model::ProductRegistration> for ProductRegistration {
             purchase_date: value.purchase_date,
             expiry_at: value.expiry_at,
             product: Product { sku: value.product },
+            serial_code: value.serial_code,
         }
     }
 }

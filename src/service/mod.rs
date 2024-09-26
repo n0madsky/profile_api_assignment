@@ -44,12 +44,12 @@ impl<Repo: ProfileRepository> ProfileService<Repo> {
         page: u32,
     ) -> Option<Vec<ProductRegistrationRecord>> {
         let _ = self.repo.get_profile(profile_id)?;
-        let start = page * self.config.profile_per_page;
+        let start = page * self.config.product_registrations_per_page;
 
         let profile_registrations = self.repo.get_product_registrations_for_profile(
             profile_id,
             start.into(),
-            self.config.profile_per_page.into(),
+            self.config.product_registrations_per_page.into(),
         );
 
         Some(

@@ -172,16 +172,12 @@ impl ProfileRepository for InMemoryProfileRepository {
         let product_registration_children: Vec<ProductRegistration> = self
             .product_registrations_children
             .get(&registration.id)
-            .and_then(|subregistrations| {
-                Some(
-                    subregistrations
-                        .iter()
-                        .filter_map(|child_id| {
-                            self.product_registrations.get((child_id - 1) as usize)
-                        })
-                        .cloned()
-                        .collect(),
-                )
+            .map(|subregistrations| {
+                subregistrations
+                    .iter()
+                    .filter_map(|child_id| self.product_registrations.get((child_id - 1) as usize))
+                    .cloned()
+                    .collect()
             })
             .unwrap_or_default();
 
