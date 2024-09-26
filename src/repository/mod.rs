@@ -1,9 +1,19 @@
 pub mod model;
 
-use std::{cmp::min, collections::HashMap};
+use std::{
+    cmp::min,
+    collections::{HashMap, HashSet},
+};
 
+use dashmap::DashMap;
 use model::{ProductRegistration, ProductRegistrationRecord, Profile};
 
+///
+/// Interface for accessing data
+/// An in-memory implementation is provided
+/// This can be replaced with a database model too, but the interface will require some slight
+/// modification to account for the fact that a db is a remote connection, and can fail
+///
 pub trait ProfileRepository {
     fn get_profiles(&self, start: u64, count: u64) -> Vec<Profile>;
     fn get_profile(&self, id: u64) -> Option<Profile>;
@@ -14,6 +24,9 @@ pub trait ProfileRepository {
         count: u64,
     ) -> Vec<ProductRegistrationRecord>;
     fn get_product_registration(&self, id: u64) -> Option<ProductRegistrationRecord>;
+    fn product_exists(&self, product: &str) -> bool;
+    fn find_missing_products(&self, products: &[String]) -> Vec<String>;
+    fn insert_product(&self, product: &str, subproducts: &[String]) -> HashSet<String>;
 }
 
 pub struct InMemoryProfileRepository {
@@ -23,6 +36,8 @@ pub struct InMemoryProfileRepository {
     product_registrations: Vec<ProductRegistration>,
     // product registration id
     product_registrations_children: HashMap<u64, Vec<u64>>,
+    // product SKU -> set(sub product SKUs)
+    products: DashMap<String, HashSet<String>>,
 }
 
 impl InMemoryProfileRepository {
@@ -32,6 +47,7 @@ impl InMemoryProfileRepository {
             profile_to_product_registrations: HashMap::new(),
             product_registrations: Vec::new(),
             product_registrations_children: HashMap::new(),
+            products: DashMap::new(),
         }
     }
 
@@ -95,6 +111,28 @@ impl InMemoryProfileRepository {
             },
         ]);
 
+        let products: DashMap<String, HashSet<String>> = DashMap::from_iter([
+            (
+                "ARIE4".into(),
+                HashSet::from(["ARCC4".into(), "AKBL1".into(), "AKDS5".into()]),
+            ),
+            (
+                "ARCC4".into(),
+                HashSet::from([
+                    "ARAS1".into(),
+                    "ARCS1".into(),
+                    "ARCH1".into(),
+                    "ARCM1".into(),
+                ]),
+            ),
+            ("AKLB1".into(), HashSet::new()),
+            ("AKDS5".into(), HashSet::new()),
+            ("ARAS1".into(), HashSet::new()),
+            ("ARCS1".into(), HashSet::new()),
+            ("ARCH1".into(), HashSet::new()),
+            ("ARCM1".into(), HashSet::new()),
+        ]);
+
         let mut profile_to_product_registrations: HashMap<u64, Vec<u64>> = HashMap::new();
         let mut product_registrations_children: HashMap<u64, Vec<u64>> = HashMap::new();
 
@@ -117,6 +155,7 @@ impl InMemoryProfileRepository {
             profile_to_product_registrations,
             product_registrations,
             product_registrations_children,
+            products,
         }
     }
 }
@@ -185,6 +224,65 @@ impl ProfileRepository for InMemoryProfileRepository {
             registration,
             children: product_registration_children,
         })
+    }
+
+    fn find_missing_products(&self, products: &[String]) -> Vec<String> {
+        let mut p = Vec::new();
+        for product in products {
+            if !self.products.contains_key(product) {
+                p.push(product.clone());
+            }
+        }
+        p
+    }
+
+    fn product_exists(&self, product: &str) -> bool {
+        self.products.contains_key(product)
+    }
+
+    fn insert_product(&self, product: &str, subproducts: &[String]) -> HashSet<String> {
+        let mut products_to_add = HashSet::new();
+        let mut visited_products = HashSet::new();
+
+        for subproduct in subproducts {
+            find_subproduct_dfs(
+                subproduct,
+                &self.products,
+                &mut visited_products,
+                &mut products_to_add,
+            );
+        }
+
+        self.products
+            .insert(product.to_owned(), products_to_add.clone());
+
+        products_to_add
+    }
+}
+
+fn find_subproduct_dfs(
+    product: &str,
+    existing_products: &DashMap<String, HashSet<String>>,
+    visited_products: &mut HashSet<String>,
+    products_to_add: &mut HashSet<String>,
+) {
+    if visited_products.contains(product) {
+        return;
+    }
+
+    visited_products.insert(product.to_owned());
+
+    let Some(subproducts) = existing_products.get(product) else {
+        tracing::error!("Unable to find {} in existing products", product);
+        return;
+    };
+
+    if subproducts.is_empty() {
+        products_to_add.insert(product.to_owned());
+    } else {
+        for p in subproducts.value() {
+            find_subproduct_dfs(p, existing_products, visited_products, products_to_add);
+        }
     }
 }
 

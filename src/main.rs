@@ -9,7 +9,9 @@ use axum::Router;
 use envconfig::Envconfig;
 use repository::InMemoryProfileRepository;
 use service::{ProfileService, ProfileServiceConfig};
-use web::controller::{product_registrations_get, profile_product_registrations_get, profiles_get};
+use web::controller::{
+    product_post, product_registrations_get, profile_product_registrations_get, profiles_get,
+};
 
 #[tokio::main]
 async fn main() {
@@ -43,6 +45,7 @@ async fn main() {
             "/product_registration/:id",
             axum::routing::get(product_registrations_get),
         )
+        .route("/product", axum::routing::post(product_post))
         .with_state(service);
 
     let app = Router::new().nest("/api/v1", profile_router);

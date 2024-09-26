@@ -1,5 +1,7 @@
 pub mod model;
 
+use std::collections::HashSet;
+
 use model::{ProductRegistrationRecord, Profile};
 
 use crate::repository::ProfileRepository;
@@ -16,6 +18,10 @@ impl Default for ProfileServiceConfig {
             product_registrations_per_page: 30,
         }
     }
+}
+
+pub enum ProfileServiceError {
+    BadRequest(String),
 }
 
 pub struct ProfileService<Repo: ProfileRepository> {
@@ -67,5 +73,38 @@ impl<Repo: ProfileRepository> ProfileService<Repo> {
         self.repo
             .get_product_registration(product_registration_id)
             .map(|registration| registration.into())
+    }
+
+    pub fn create_product(
+        &self,
+        product: &str,
+        subproducts: &[String],
+    ) -> Result<HashSet<String>, ProfileServiceError> {
+        let missing_products = self.repo.find_missing_products(subproducts);
+        if !missing_products.is_empty() {
+            tracing::warn!(
+                "Unable to create product {}, as products {:?} does not exist in the db",
+                product,
+                missing_products
+            );
+
+            return Err(ProfileServiceError::BadRequest(format!(
+                "Products {:?} does not exist",
+                missing_products
+            )));
+        }
+
+        if self.repo.product_exists(product) {
+            tracing::warn!("Unable to create product {}, as product exists", product);
+
+            return Err(ProfileServiceError::BadRequest(format!(
+                "Product {} exists",
+                product
+            )));
+        }
+
+        let products = self.repo.insert_product(product, subproducts);
+
+        Ok(products)
     }
 }

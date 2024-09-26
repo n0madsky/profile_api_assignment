@@ -72,3 +72,34 @@ pub(crate) async fn product_registrations_get(
         None => Err(ProfileApiError::NotFound),
     }
 }
+
+#[derive(serde::Deserialize)]
+pub(crate) struct ProductPostRequest {
+    pub sku: String,
+    pub bundled_products: Vec<String>,
+}
+
+#[derive(serde::Serialize)]
+pub(crate) struct ProductPostResponse {
+    pub sku_added: String,
+    pub bundled_products: Vec<String>,
+}
+
+#[debug_handler]
+pub(crate) async fn product_post(
+    State(service): State<Arc<ProfileService<InMemoryProfileRepository>>>,
+    Json(req): Json<ProductPostRequest>,
+) -> Result<Json<ProductPostResponse>, ProfileApiError> {
+    let res = service.create_product(&req.sku, &req.bundled_products);
+    match res {
+        Ok(products) => Ok(Json(ProductPostResponse {
+            sku_added: req.sku,
+            bundled_products: products.into_iter().collect(),
+        })),
+        Err(err) => match err {
+            crate::service::ProfileServiceError::BadRequest(r) => {
+                Err(ProfileApiError::BadRequest(r))
+            }
+        },
+    }
+}
