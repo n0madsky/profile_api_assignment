@@ -421,10 +421,9 @@ mod tests {
     use super::*;
 
     fn setup() -> InMemoryProfileRepository {
-        InMemoryProfileRepository::with_example_data(
-            || String::new(),
-            || chrono::DateTime::<chrono::Utc>::MIN_UTC,
-        )
+        InMemoryProfileRepository::with_example_data(String::new, || {
+            chrono::DateTime::<chrono::Utc>::MIN_UTC
+        })
     }
 
     #[test]

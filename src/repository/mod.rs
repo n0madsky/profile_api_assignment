@@ -21,7 +21,16 @@ pub trait ProfileRepository {
         count: usize,
     ) -> Vec<ProductRegistrationRecord>;
     fn get_product_registration(&self, id: u64) -> Option<ProductRegistrationRecord>;
-    fn insert_product_registration(&self, profile_id: u64, product_sku: &str) -> Result<ProductRegistrationRecord, HashSet<String>>;
+    fn insert_product_registration(
+        &self,
+        profile_id: u64,
+        product_sku: &str,
+    ) -> Result<ProductRegistrationRecord, HashSet<String>>;
     fn product_exists(&self, product: &str) -> bool;
-    fn insert_product(&self, product: &str, subproducts: &[String], active_for: Option<u64>) -> HashSet<String>;
+    fn insert_product(
+        &self,
+        product: &str,
+        subproducts: &[String],
+        active_for: Option<u64>,
+    ) -> HashSet<String>;
 }

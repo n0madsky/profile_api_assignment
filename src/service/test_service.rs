@@ -34,10 +34,9 @@ fn setup() -> ProfileService<InMemoryProfileRepository> {
             .init()
     });
     ProfileService::new(
-        InMemoryProfileRepository::with_example_data(
-            || String::new(),
-            || chrono::DateTime::<chrono::Utc>::MIN_UTC,
-        ),
+        InMemoryProfileRepository::with_example_data(String::new, || {
+            chrono::DateTime::<chrono::Utc>::MIN_UTC
+        }),
         ProfileServiceConfig::default(),
     )
 }

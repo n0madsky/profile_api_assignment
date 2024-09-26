@@ -1,4 +1,3 @@
-
 pub struct ProfileServiceConfig {
     pub profile_per_page: usize,
     pub product_registrations_per_page: usize,
