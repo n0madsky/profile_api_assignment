@@ -8,6 +8,8 @@ edition = "2021"
 chrono = { version = "0.4.38", features = ["serde"] }
 dashmap = "6.1.0"
 
+regex = "1.10.6"
+
 # Web frameworks
 axum = { version = "0.7.6", features = ["json", "macros", "query"] }
 envconfig = "0.10.0"

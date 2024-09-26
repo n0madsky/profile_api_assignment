@@ -76,6 +76,7 @@ pub(crate) async fn product_registrations_get(
 #[derive(serde::Deserialize)]
 pub(crate) struct ProductPostRequest {
     pub sku: String,
+    #[serde(default)]
     pub bundled_products: Vec<String>,
 }
 

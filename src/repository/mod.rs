@@ -125,12 +125,18 @@ impl InMemoryProfileRepository {
                     "ARCM1".into(),
                 ]),
             ),
-            ("AKLB1".into(), HashSet::new()),
+            (
+                "AKB48".into(),
+                HashSet::from(["SKE48".into(), "NMB48".into()]),
+            ),
+            ("AKBL1".into(), HashSet::new()),
             ("AKDS5".into(), HashSet::new()),
             ("ARAS1".into(), HashSet::new()),
             ("ARCS1".into(), HashSet::new()),
             ("ARCH1".into(), HashSet::new()),
             ("ARCM1".into(), HashSet::new()),
+            ("SKE48".into(), HashSet::new()),
+            ("NMB48".into(), HashSet::new()),
         ]);
 
         let mut profile_to_product_registrations: HashMap<u64, Vec<u64>> = HashMap::new();
@@ -202,7 +208,6 @@ impl ProfileRepository for InMemoryProfileRepository {
             .collect()
     }
 
-    // TODO - fill out children logic
     fn get_product_registration(&self, id: u64) -> Option<ProductRegistrationRecord> {
         let registration = self
             .product_registrations
@@ -293,5 +298,44 @@ mod tests {
     #[test]
     fn static_data_is_valid() {
         let _ = InMemoryProfileRepository::with_example_data();
+    }
+
+    #[test]
+    fn insert_product_dfs_ok() {
+        let expected = HashSet::from([
+            "AKBL1".into(),
+            "AKDS5".into(),
+            "ARAS1".into(),
+            "ARCS1".into(),
+            "ARCH1".into(),
+            "ARCM1".into(),
+        ]);
+
+        let repo = InMemoryProfileRepository::with_example_data();
+        assert!(!repo.product_exists("foo"));
+        let actual = repo.insert_product("foo", &["ARIE4".into()]);
+
+        assert_eq!(expected, actual);
+        assert!(repo.product_exists("foo"));
+    }
+
+    #[test]
+    fn insert_product_repeated_insert_ok() {
+        let expected = HashSet::from([
+            "AKBL1".into(),
+            "AKDS5".into(),
+            "ARAS1".into(),
+            "ARCS1".into(),
+            "ARCH1".into(),
+            "ARCM1".into(),
+            "SKE48".into(),
+            "NMB48".into(),
+        ]);
+
+        let repo = InMemoryProfileRepository::with_example_data();
+        let _ = repo.insert_product("foo", &["ARIE4".into()]);
+        let actual = repo.insert_product("bar", &["foo".into(), "AKB48".into()]);
+
+        assert_eq!(expected, actual);
     }
 }

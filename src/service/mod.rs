@@ -1,8 +1,9 @@
 pub mod model;
 
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::OnceLock};
 
 use model::{ProductRegistrationRecord, Profile};
+use regex::Regex;
 
 use crate::repository::ProfileRepository;
 
@@ -27,6 +28,24 @@ pub enum ProfileServiceError {
 pub struct ProfileService<Repo: ProfileRepository> {
     repo: Repo,
     config: ProfileServiceConfig,
+}
+
+fn product_verification_regex() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| Regex::new("^[A-Z0-9]+$").unwrap())
+}
+
+fn is_product_sku_valid(product: &str) -> Result<(), &'static str> {
+    if product.is_empty() {
+        return Err("Empty strings are not allowed");
+    }
+
+    let regex = product_verification_regex();
+    if !regex.is_match(product) {
+        return Err("Product SKU can only contain alphanumeric characters");
+    }
+
+    Ok(())
 }
 
 impl<Repo: ProfileRepository> ProfileService<Repo> {
@@ -80,6 +99,24 @@ impl<Repo: ProfileRepository> ProfileService<Repo> {
         product: &str,
         subproducts: &[String],
     ) -> Result<HashSet<String>, ProfileServiceError> {
+        if let Err(msg) = is_product_sku_valid(product) {
+            tracing::warn!(
+                "Unable to insert product: {}, subproducts: {:?}, product name is invalid",
+                product,
+                subproducts
+            );
+
+            return Err(ProfileServiceError::BadRequest(String::from(msg)));
+        }
+
+        for p in subproducts.iter() {
+            if let Err(msg) = is_product_sku_valid(p) {
+                tracing::warn!("Unable to insert product: {}, subproducts: {:?}, subproduct name {} is invalid", product, subproducts, p);
+
+                return Err(ProfileServiceError::BadRequest(String::from(msg)));
+            }
+        }
+
         let missing_products = self.repo.find_missing_products(subproducts);
         if !missing_products.is_empty() {
             tracing::warn!(
