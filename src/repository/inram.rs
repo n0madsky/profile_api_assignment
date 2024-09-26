@@ -18,6 +18,8 @@ pub struct InMemoryProfileRepository {
     products: DashMap<String, HashSet<String>>,
     // Product SKU -> expiry time, if it is not in the map, the product does not expire
     product_active_for: DashMap<String, u64>,
+    serial_generator: fn() -> String,
+    time_provider: fn() -> chrono::DateTime<chrono::Utc>,
 }
 
 fn registration_is_active(
@@ -30,6 +32,17 @@ fn registration_is_active(
     }
 }
 
+pub fn random_serial_generator() -> String {
+    let mut rng = rand::thread_rng();
+    (0..15)
+        .map(|_| rng.sample(rand::distributions::Alphanumeric) as char)
+        .collect()
+}
+
+pub fn default_time_provider() -> chrono::DateTime<chrono::Utc> {
+    chrono::Utc::now()
+}
+
 impl InMemoryProfileRepository {
     pub fn new() -> Self {
         Self {
@@ -39,10 +52,15 @@ impl InMemoryProfileRepository {
             product_registrations_children: DashMap::new(),
             products: DashMap::new(),
             product_active_for: DashMap::new(),
+            serial_generator: random_serial_generator,
+            time_provider: default_time_provider,
         }
     }
 
-    pub fn with_example_data() -> Self {
+    pub fn with_example_data(
+        serial_generator: fn() -> String,
+        time_provider: fn() -> chrono::DateTime<chrono::Utc>,
+    ) -> Self {
         let profiles = Vec::from([
             Profile {
                 id: 1,
@@ -154,6 +172,8 @@ impl InMemoryProfileRepository {
             product_registrations_children,
             products,
             product_active_for: DashMap::new(),
+            serial_generator,
+            time_provider,
         }
     }
 
@@ -166,7 +186,7 @@ impl InMemoryProfileRepository {
 
         let mut existing_products = HashSet::new();
 
-        let now = chrono::Utc::now();
+        let now = (self.time_provider)();
         for id in product_registration_ids.value() {
             let Some(registration_record) = self.get_product_registration(*id) else {
                 continue;
@@ -205,19 +225,11 @@ impl InMemoryProfileRepository {
                 purchase_date + chrono::Duration::seconds(*expires_in.value() as i64)
             }),
             product: product_sku.into(),
-            serial_code:
-                crate::repository::inram::InMemoryProfileRepository::generate_random_serial(),
+            serial_code: (self.serial_generator)(),
         };
         registrations.push(registration.clone());
 
         registration
-    }
-
-    fn generate_random_serial() -> String {
-        let mut rng = rand::thread_rng();
-        (0..15)
-            .map(|_| rng.sample(rand::distributions::Alphanumeric) as char)
-            .collect()
     }
 }
 
@@ -342,7 +354,7 @@ impl ProfileRepository for InMemoryProfileRepository {
             return Err(intersection);
         }
 
-        let now = chrono::Utc::now();
+        let now = (self.time_provider)();
         let mut registrations = self.product_registrations.lock().unwrap();
         let parent_registration = self.append_product_registration(
             &mut registrations,
@@ -408,9 +420,16 @@ fn find_subproduct_dfs(
 mod tests {
     use super::*;
 
+    fn setup() -> InMemoryProfileRepository {
+        InMemoryProfileRepository::with_example_data(
+            || String::new(),
+            || chrono::DateTime::<chrono::Utc>::MIN_UTC,
+        )
+    }
+
     #[test]
     fn static_data_is_valid() {
-        let _ = InMemoryProfileRepository::with_example_data();
+        setup();
     }
 
     #[test]
@@ -424,7 +443,7 @@ mod tests {
             "ARCM1".into(),
         ]);
 
-        let repo = InMemoryProfileRepository::with_example_data();
+        let repo = setup();
         assert!(!repo.product_exists("foo"));
         let actual = repo.insert_product("foo", &["ARIE4".into()], None);
 
@@ -445,7 +464,7 @@ mod tests {
             "NMB48".into(),
         ]);
 
-        let repo = InMemoryProfileRepository::with_example_data();
+        let repo = setup();
         let _ = repo.insert_product("foo", &["ARIE4".into()], None);
         let actual = repo.insert_product("bar", &["foo".into(), "AKB48".into()], None);
 

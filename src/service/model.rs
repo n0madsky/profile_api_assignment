@@ -1,3 +1,4 @@
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Profile {
     // Note, this is a slight divergence from the spec,
     // spec specifies id should be int
@@ -19,6 +20,7 @@ impl From<crate::repository::model::Profile> for Profile {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProductRegistration {
     pub id: u64,
     pub purchase_date: chrono::DateTime<chrono::Utc>,
@@ -39,6 +41,7 @@ impl From<crate::repository::model::ProductRegistration> for ProductRegistration
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProductRegistrationRecord {
     pub registration: ProductRegistration,
     pub children: Vec<ProductRegistration>,

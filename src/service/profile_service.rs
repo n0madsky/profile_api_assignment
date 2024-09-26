@@ -8,6 +8,7 @@ use crate::repository::ProfileRepository;
 
 use regex::Regex;
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum ProfileServiceError {
     BadRequest(String),
     InternalServiceError(String),
