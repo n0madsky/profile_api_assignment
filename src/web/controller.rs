@@ -68,6 +68,10 @@ pub(crate) async fn profile_product_registrations_get(
 pub(crate) async fn product_registrations_get(
     State(service): State<Arc<ProfileService<InMemoryProfileRepository>>>,
     Path(product_registration_id): Path<u64>,
-) -> Result<Json<ProductRegistration>, ProfileApiError> {
-    todo!()
+) -> Result<Json<ProductRegistrationRecord>, ProfileApiError> {
+    let product_registration = service.get_product_registration(product_registration_id);
+    match product_registration {
+        Some(registration) => Ok(Json(registration.into())),
+        None => Err(ProfileApiError::NotFound),
+    }
 }

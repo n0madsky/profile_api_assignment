@@ -60,5 +60,12 @@ impl<Repo: ProfileRepository> ProfileService<Repo> {
         )
     }
 
-    pub fn get_product_registration(&self, product_registration_id: u64) {}
+    pub fn get_product_registration(
+        &self,
+        product_registration_id: u64,
+    ) -> Option<ProductRegistrationRecord> {
+        self.repo
+            .get_product_registration(product_registration_id)
+            .map(|registration| registration.into())
+    }
 }
