@@ -1,6 +1,6 @@
 pub mod model;
 
-use model::{ProductRegistration, Profile};
+use model::{ProductRegistrationRecord, Profile};
 
 use crate::repository::ProfileRepository;
 
@@ -42,7 +42,7 @@ impl<Repo: ProfileRepository> ProfileService<Repo> {
         &self,
         profile_id: u64,
         page: u32,
-    ) -> Option<Vec<ProductRegistration>> {
+    ) -> Option<Vec<ProductRegistrationRecord>> {
         let _ = self.repo.get_profile(profile_id)?;
         let start = page * self.config.profile_per_page;
 

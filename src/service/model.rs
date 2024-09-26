@@ -38,3 +38,17 @@ impl From<crate::repository::model::ProductRegistration> for ProductRegistration
         }
     }
 }
+
+pub struct ProductRegistrationRecord {
+    pub registration: ProductRegistration,
+    pub children: Vec<ProductRegistration>,
+}
+
+impl From<crate::repository::model::ProductRegistrationRecord> for ProductRegistrationRecord {
+    fn from(value: crate::repository::model::ProductRegistrationRecord) -> Self {
+        ProductRegistrationRecord {
+            registration: value.registration.into(),
+            children: value.children.into_iter().map(|a| a.into()).collect(),
+        }
+    }
+}

@@ -7,7 +7,6 @@ pub(crate) struct Profile {
     pub email: String,
     pub firstname: String,
     pub lastname: String,
-    pub product_registrations: Vec<ProductRegistration>,
 }
 
 impl From<crate::service::model::Profile> for Profile {
@@ -17,7 +16,6 @@ impl From<crate::service::model::Profile> for Profile {
             email: value.email,
             firstname: value.firstname,
             lastname: value.lastname,
-            product_registrations: Vec::new(),
         }
     }
 }
@@ -31,7 +29,6 @@ pub(crate) struct ProductRegistration {
     #[serde(with = "chrono::serde::ts_milliseconds_option")]
     pub expiry_at: Option<chrono::DateTime<chrono::Utc>>,
     pub product: Product,
-    pub additional_product_registrations: Vec<ProductRegistrationsChild>,
 }
 
 impl From<crate::service::model::ProductRegistration> for ProductRegistration {
@@ -41,7 +38,26 @@ impl From<crate::service::model::ProductRegistration> for ProductRegistration {
             purchase_date: value.purchase_date,
             expiry_at: value.expiry_at,
             product: Product { sku: value.product },
-            additional_product_registrations: Vec::new(),
+        }
+    }
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+pub(crate) struct ProductRegistrationRecord {
+    #[serde(flatten)]
+    pub registration: ProductRegistration,
+    pub additional_product_registrations: Vec<ProductRegistration>,
+}
+
+impl From<crate::service::model::ProductRegistrationRecord> for ProductRegistrationRecord {
+    fn from(value: crate::service::model::ProductRegistrationRecord) -> Self {
+        ProductRegistrationRecord {
+            registration: value.registration.into(),
+            additional_product_registrations: value
+                .children
+                .into_iter()
+                .map(|a| a.into())
+                .collect(),
         }
     }
 }
@@ -49,15 +65,4 @@ impl From<crate::service::model::ProductRegistration> for ProductRegistration {
 #[derive(serde::Deserialize, serde::Serialize)]
 pub(crate) struct Product {
     pub sku: String,
-}
-
-#[derive(serde::Deserialize, serde::Serialize)]
-pub(crate) struct ProductRegistrationsChild {
-    pub id: u64,
-    #[serde(with = "chrono::serde::ts_milliseconds")]
-    pub purchase_date: chrono::DateTime<chrono::Utc>,
-    #[serde(with = "chrono::serde::ts_milliseconds")]
-    pub expiry_at: chrono::DateTime<chrono::Utc>,
-    pub product: Product,
-    pub serial_code: String,
 }

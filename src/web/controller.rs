@@ -6,7 +6,10 @@ use axum::{
     Json,
 };
 
-use crate::{repository::InMemoryProfileRepository, service::ProfileService};
+use crate::{
+    repository::InMemoryProfileRepository, service::ProfileService,
+    web::model::ProductRegistrationRecord,
+};
 
 use super::{
     error::ProfileApiError,
@@ -44,7 +47,7 @@ pub(crate) async fn profile_product_registrations_get(
     State(service): State<Arc<ProfileService<InMemoryProfileRepository>>>,
     Path(profile_id): Path<u64>,
     Query(query): Query<Pagination>,
-) -> Result<Json<PagedResult<ProductRegistration>>, ProfileApiError> {
+) -> Result<Json<PagedResult<ProductRegistrationRecord>>, ProfileApiError> {
     let page = query.page.unwrap_or(0);
 
     let res = service.get_product_registrations_for_profile(profile_id, page);

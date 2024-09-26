@@ -2,7 +2,7 @@ pub mod model;
 
 use std::{cmp::min, collections::HashMap};
 
-use model::{ProductRegistration, Profile};
+use model::{ProductRegistration, ProductRegistrationRecord, Profile};
 
 pub trait ProfileRepository {
     fn get_profiles(&self, start: u64, count: u64) -> Vec<Profile>;
@@ -12,8 +12,8 @@ pub trait ProfileRepository {
         profile_id: u64,
         start: u64,
         count: u64,
-    ) -> Vec<ProductRegistration>;
-    fn get_product_registration(&self, id: u64) -> Option<ProductRegistration>;
+    ) -> Vec<ProductRegistrationRecord>;
+    fn get_product_registration(&self, id: u64) -> Option<ProductRegistrationRecord>;
 }
 
 pub struct InMemoryProfileRepository {
@@ -22,7 +22,7 @@ pub struct InMemoryProfileRepository {
     profile_to_product_registrations: HashMap<u64, Vec<u64>>,
     product_registrations: Vec<ProductRegistration>,
     // product registration id
-    product_registration_children: HashMap<u64, Vec<u64>>,
+    product_registrations_children: HashMap<u64, Vec<u64>>,
 }
 
 impl InMemoryProfileRepository {
@@ -31,7 +31,7 @@ impl InMemoryProfileRepository {
             profiles: Vec::new(),
             profile_to_product_registrations: HashMap::new(),
             product_registrations: Vec::new(),
-            product_registration_children: HashMap::new(),
+            product_registrations_children: HashMap::new(),
         }
     }
 
@@ -96,18 +96,27 @@ impl InMemoryProfileRepository {
         ]);
 
         let mut profile_to_product_registrations: HashMap<u64, Vec<u64>> = HashMap::new();
+        let mut product_registrations_children: HashMap<u64, Vec<u64>> = HashMap::new();
+
         for registration in product_registrations.iter() {
             profile_to_product_registrations
                 .entry(registration.profile_id)
                 .or_default()
                 .push(registration.id);
+
+            if let Some(parent_id) = registration.parent_id {
+                product_registrations_children
+                    .entry(parent_id)
+                    .or_default()
+                    .push(registration.id);
+            }
         }
 
         Self {
             profiles,
             profile_to_product_registrations,
             product_registrations,
-            product_registration_children: HashMap::new(),
+            product_registrations_children,
         }
     }
 }
@@ -134,7 +143,7 @@ impl ProfileRepository for InMemoryProfileRepository {
         profile_id: u64,
         start: u64,
         count: u64,
-    ) -> Vec<ProductRegistration> {
+    ) -> Vec<ProductRegistrationRecord> {
         let Some(product_registration_ids) = self.profile_to_product_registrations.get(&profile_id)
         else {
             return Vec::new();
@@ -155,8 +164,31 @@ impl ProfileRepository for InMemoryProfileRepository {
     }
 
     // TODO - fill out children logic
-    fn get_product_registration(&self, id: u64) -> Option<ProductRegistration> {
-        self.product_registrations.get((id - 1) as usize).cloned()
+    fn get_product_registration(&self, id: u64) -> Option<ProductRegistrationRecord> {
+        let registration = self
+            .product_registrations
+            .get((id - 1) as usize)?
+            .to_owned();
+        let product_registration_children: Vec<ProductRegistration> = self
+            .product_registrations_children
+            .get(&registration.id)
+            .and_then(|subregistrations| {
+                Some(
+                    subregistrations
+                        .iter()
+                        .filter_map(|child_id| {
+                            self.product_registrations.get((child_id - 1) as usize)
+                        })
+                        .cloned()
+                        .collect(),
+                )
+            })
+            .unwrap_or_default();
+
+        Some(ProductRegistrationRecord {
+            registration,
+            children: product_registration_children,
+        })
     }
 }
 
