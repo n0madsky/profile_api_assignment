@@ -15,8 +15,7 @@ use web::controller::{
 
 #[tokio::main]
 async fn main() {
-    // initialize tracing
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt().with_line_number(true).init();
 
     let config = config::Config::init_from_env().unwrap();
     tracing::info!("Starting with the following configs: {:#?}", config);
