@@ -28,8 +28,8 @@ pub(crate) struct ProductRegistration {
     // set as Unix Epoch, at milliseconds precision
     #[serde(with = "chrono::serde::ts_milliseconds")]
     pub purchase_date: chrono::DateTime<chrono::Utc>,
-    #[serde(with = "chrono::serde::ts_milliseconds")]
-    pub expiry_at: chrono::DateTime<chrono::Utc>,
+    #[serde(with = "chrono::serde::ts_milliseconds_option")]
+    pub expiry_at: Option<chrono::DateTime<chrono::Utc>>,
     pub product: Product,
     pub additional_product_registrations: Vec<ProductRegistrationsChild>,
 }

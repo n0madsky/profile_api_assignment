@@ -22,7 +22,7 @@ impl From<crate::repository::model::Profile> for Profile {
 pub struct ProductRegistration {
     pub id: u64,
     pub purchase_date: chrono::DateTime<chrono::Utc>,
-    pub expiry_at: chrono::DateTime<chrono::Utc>,
+    pub expiry_at: Option<chrono::DateTime<chrono::Utc>>,
     pub product: String,
     pub serial_code: String,
 }
