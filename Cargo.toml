@@ -7,7 +7,7 @@ edition = "2021"
 # datastructures etc
 chrono = { version = "0.4.38", features = ["serde"] }
 dashmap = "6.1.0"
-
+rand = "0.8.5"
 regex = "1.10.6"
 
 # Web frameworks

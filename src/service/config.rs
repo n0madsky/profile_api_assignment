@@ -1,7 +1,7 @@
 
 pub struct ProfileServiceConfig {
-    pub profile_per_page: u32,
-    pub product_registrations_per_page: u32,
+    pub profile_per_page: usize,
+    pub product_registrations_per_page: usize,
 }
 
 impl Default for ProfileServiceConfig {

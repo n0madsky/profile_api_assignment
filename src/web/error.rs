@@ -28,3 +28,16 @@ impl axum::response::IntoResponse for ProfileApiError {
         }
     }
 }
+
+impl From<crate::service::ProfileServiceError> for ProfileApiError {
+    fn from(value: crate::service::ProfileServiceError) -> Self {
+        match value {
+            crate::service::ProfileServiceError::BadRequest(msg) => {
+                ProfileApiError::BadRequest(msg)
+            }
+            crate::service::ProfileServiceError::InternalServiceError(msg) => {
+                ProfileApiError::InternalError(msg)
+            }
+        }
+    }
+}

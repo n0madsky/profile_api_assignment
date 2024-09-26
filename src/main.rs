@@ -7,10 +7,10 @@ use std::sync::Arc;
 
 use axum::Router;
 use envconfig::Envconfig;
-use repository::InMemoryProfileRepository;
+use repository::inram::InMemoryProfileRepository;
 use service::{ProfileService, ProfileServiceConfig};
 use web::controller::{
-    product_post, product_registrations_get, profile_product_registrations_get, profiles_get,
+    product_post, product_registrations_get, product_registrations_post, profile_product_registrations_get, profiles_get
 };
 
 #[tokio::main]
@@ -44,6 +44,7 @@ async fn main() {
             "/product_registration/:id",
             axum::routing::get(product_registrations_get),
         )
+        .route("/profiles/:profile/product_registrations", axum::routing::post(product_registrations_post))
         .route("/product", axum::routing::post(product_post))
         .with_state(service);
 

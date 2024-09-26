@@ -1,4 +1,4 @@
-use crate::repository::InMemoryProfileRepository;
+use crate::repository::inram::InMemoryProfileRepository;
 
 use super::{ProfileService, ProfileServiceConfig};
 
@@ -14,7 +14,7 @@ fn setup() -> ProfileService<InMemoryProfileRepository> {
 fn test_product_insert_empty_product_name() {
     let service = setup();
 
-    let res = service.create_product("", &["foo".into(), "bar".into()]);
+    let res = service.create_product("", None, &["foo".into(), "bar".into()]);
 
     assert!(res.is_err());
 }

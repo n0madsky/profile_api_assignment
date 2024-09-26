@@ -7,7 +7,7 @@ use axum::{
 };
 
 use crate::{
-    repository::InMemoryProfileRepository, service::ProfileService,
+    repository::inram::InMemoryProfileRepository, service::ProfileService,
     web::model::ProductRegistrationRecord,
 };
 
@@ -76,6 +76,7 @@ pub(crate) async fn product_registrations_get(
 #[derive(serde::Deserialize)]
 pub(crate) struct ProductPostRequest {
     pub sku: String,
+    pub active_for: Option<u64>,
     #[serde(default)]
     pub bundled_products: Vec<String>,
 }
@@ -91,16 +92,31 @@ pub(crate) async fn product_post(
     State(service): State<Arc<ProfileService<InMemoryProfileRepository>>>,
     Json(req): Json<ProductPostRequest>,
 ) -> Result<Json<ProductPostResponse>, ProfileApiError> {
-    let res = service.create_product(&req.sku, &req.bundled_products);
+    let res = service.create_product(&req.sku, req.active_for, &req.bundled_products);
     match res {
         Ok(products) => Ok(Json(ProductPostResponse {
             sku_added: req.sku,
             bundled_products: products.into_iter().collect(),
         })),
-        Err(err) => match err {
-            crate::service::ProfileServiceError::BadRequest(r) => {
-                Err(ProfileApiError::BadRequest(r))
-            }
-        },
+        Err(err) => Err(err.into()),
+    }
+}
+
+#[derive(serde::Deserialize)]
+pub(crate) struct ProductRegistrationPostParams {
+    pub product: String,
+}
+
+#[debug_handler]
+pub(crate) async fn product_registrations_post(
+    State(service): State<Arc<ProfileService<InMemoryProfileRepository>>>,
+    Path(profile): Path<u64>,
+    Query(query): Query<ProductRegistrationPostParams>,
+) -> Result<Json<ProductRegistrationRecord>, ProfileApiError> {
+    let res = service.create_product_registration(profile, &query.product);
+
+    match res {
+        Ok(registration) => Ok(Json(registration.into())),
+        Err(err) => Err(err.into()),
     }
 }
